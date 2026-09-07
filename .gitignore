@@ -1,0 +1,83 @@
+# Python / Django
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+__pycache__/
+*.log
+*.pot
+*.mo
+*.db
+*.sqlite3
+*.sqlite
+coverage/
+htmlcov/
+.tox/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.cover
+.hypothesis/
+.venv
+venv/
+ENV/
+env/
+.env
+*.env
+.python-version
+
+# Django-specific
+media/
+staticfiles/
+static/
+*.pid
+db.sqlite3
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+.project
+.pydevproject
+.settings
+*.sublime-*
+
+# Node / React
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.cache/
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/package-lock.json
+frontend/yarn.lock
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Logs
+logs/
+*.log
+*.pid
+
+# Secrets
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# OS
+Thumbs.db
+Desktop.ini
