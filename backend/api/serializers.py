@@ -53,9 +53,10 @@ class FileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = File
-        fields = ['id', 'original_name', 'size', 'size_human', 'uploaded_at', 'last_download_at',
-                  'comment', 'file', 'special_link']
-        read_only_fields = ['id', 'size', 'uploaded_at', 'last_download_at', 'special_link']
+        fields = ['id', 'owner', 'original_name', 'size', 'size_human', 'uploaded_at',
+                  'last_download_at', 'comment', 'file', 'special_link']
+        read_only_fields = ['owner', 'original_name', 'size', 'uploaded_at',
+                            'last_download_at', 'special_link']
 
     def get_size_human(self, obj):
         if obj.size < 1024:
