@@ -13,8 +13,11 @@ export const logout = createAsyncThunk('auth/logout', async () => {
 });
 
 export const register = createAsyncThunk('auth/register', async (userData) => {
-  const response = await api.post('/users/', userData);
-  return response.data;
+  // 1. Регистрируем пользователя
+  await api.register(userData);
+  // 2. Автоматически входим
+  const loginResponse = await api.login(userData.username, userData.password);
+  return loginResponse.data;
 });
 
 export const fetchMe = createAsyncThunk('auth/me', async () => {

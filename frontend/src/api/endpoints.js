@@ -8,25 +8,27 @@ export const logout = () =>
   api.post('/logout/');
 
 export const register = (userData) =>
-  api.post('/users/', userData);
+  api.post('/api/users/', userData);
 
 export const fetchMe = () =>
   api.get('/users/me/');
 
 // Управление пользователями (админ)
 export const fetchUsers = () =>
-  api.get('/users/');
+  api.get('/api/users/');
 
 export const deleteUser = (userId) =>
-  api.delete(`/users/${userId}/`);
+  api.delete(`/api/users/${userId}/`);
 
 export const updateUser = (userId, data) =>
-  api.patch(`/users/${userId}/`, data);
+  api.patch(`/api/users/${userId}/`, data);
 
 // Работа с файлами
 // Получение списка файлов
 export const fetchFiles = (userId = null) => {
+  console.log('fetchFiles called with userId:', userId);
   const params = userId ? { user_id: userId } : {};
+  console.log('params:', params);
   return api.get('/api/files/', { params });
 };
 

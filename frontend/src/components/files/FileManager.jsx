@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import {
   fetchFiles,
   uploadFile,
@@ -13,6 +13,11 @@ import { downloadFile, getSpecialLink } from '../../api/endpoints';
 
 const FileManager = () => {
   const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
+  const userIdParam = searchParams.get('user_id');
+  const usernameParam = searchParams.get('username');
+  console.log('FileManager: userIdParam =', userIdParam);
+
   const { items, loading, error } = useSelector((state) => state.files);
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -21,25 +26,13 @@ const FileManager = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      dispatch(fetchFiles());
+      // Если userIdParam есть и пользователь админ, передаём его; иначе undefined (свои файлы)
+      const targetUserId = (user?.is_admin && userIdParam) ? userIdParam : undefined;
+      dispatch(fetchFiles(targetUserId));
     } else {
       dispatch(clearFiles());
     }
-  }, [dispatch, isAuthenticated]);
-
-  // Если пользователь не авторизован – показываем приветствие
-  if (!isAuthenticated) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: 50 }}>
-        <h2>Добро пожаловать в My Cloud!</h2>
-        <p>Для доступа к файлам необходимо войти или зарегистрироваться.</p>
-        <div style={{ marginTop: 20 }}>
-          <Link to="/login"><button>Войти</button></Link>
-          <Link to="/register"><button style={{ marginLeft: 10 }}>Регистрация</button></Link>
-        </div>
-      </div>
-    );
-  }
+  }, [dispatch, isAuthenticated, userIdParam, user]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -47,22 +40,31 @@ const FileManager = () => {
     await dispatch(uploadFile({ file: selectedFile, comment }));
     setSelectedFile(null);
     setComment('');
+    // Обновляем список после загрузки
+    const targetUserId = (user?.is_admin && userIdParam) ? userIdParam : undefined;
+    dispatch(fetchFiles(targetUserId));
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Удалить файл?')) {
       await dispatch(deleteFile(id));
+      const targetUserId = (user?.is_admin && userIdParam) ? userIdParam : undefined;
+      dispatch(fetchFiles(targetUserId));
     }
   };
 
   const handleRename = async (id, newName) => {
     await dispatch(renameFile({ fileId: id, newName }));
     setEditingFile(null);
+    const targetUserId = (user?.is_admin && userIdParam) ? userIdParam : undefined;
+    dispatch(fetchFiles(targetUserId));
   };
 
   const handleCommentUpdate = async (id, newComment) => {
     await dispatch(updateComment({ fileId: id, comment: newComment }));
     setEditingFile(null);
+    const targetUserId = (user?.is_admin && userIdParam) ? userIdParam : undefined;
+    dispatch(fetchFiles(targetUserId));
   };
 
   const handleDownload = async (id, originalName) => {
@@ -91,29 +93,49 @@ const FileManager = () => {
     }
   };
 
+  // Если не авторизован – показываем приветствие
+  if (!isAuthenticated) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: 50 }}>
+        <h2>Добро пожаловать в My Cloud!</h2>
+        <p>Для доступа к файлам необходимо войти или зарегистрироваться.</p>
+        <div style={{ marginTop: 20 }}>
+          <Link to="/login"><button>Войти</button></Link>
+          <Link to="/register"><button style={{ marginLeft: 10 }}>Регистрация</button></Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Для администратора показываем, чьи файлы мы смотрим
+  const displayName = userIdParam && user?.is_admin
+    ? usernameParam || `Пользователь ID ${userIdParam}`
+    : 'Мои';
+
   return (
     <div style={{ padding: 20 }}>
-      <h2>Мои файлы</h2>
+      <h2>Файлы ({displayName})</h2>
 
-      {/* Форма загрузки */}
-      <form onSubmit={handleUpload} style={{ marginBottom: 20 }}>
-        <input
-          type="file"
-          onChange={(e) => setSelectedFile(e.target.files[0])}
-        />
-        <input
-          type="text"
-          placeholder="Комментарий"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-        />
-        <button type="submit" disabled={!selectedFile}>Загрузить</button>
-      </form>
+      {/* Форма загрузки – только для своих файлов (если администратор не в чужом кабинете) */}
+      {(!userIdParam || !user?.is_admin) && (
+        <form onSubmit={handleUpload} style={{ marginBottom: 20 }}>
+          <input
+            type="file"
+            onChange={(e) => setSelectedFile(e.target.files[0])}
+          />
+          <input
+            type="text"
+            placeholder="Комментарий"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          />
+          <button type="submit" disabled={!selectedFile}>Загрузить</button>
+        </form>
+      )}
 
       {loading && <div>Загрузка...</div>}
       {error && <div style={{ color: 'red' }}>{error}</div>}
 
-      {/* Список файлов */}
       {items.length === 0 && !loading && <div>Файлов нет</div>}
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {items.map((file) => (

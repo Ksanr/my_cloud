@@ -54,13 +54,14 @@ class FileViewSet(CsrfExemptMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
 
     def get_queryset(self):
+        print("Query params:", self.request.query_params)
         user = self.request.user
         if user.is_admin:
-            # администратор может просматривать файлы любого пользователя
             target_user_id = self.request.query_params.get('user_id')
             if target_user_id:
                 return File.objects.filter(owner_id=target_user_id)
-            return File.objects.all()
+            # По умолчанию – свои файлы
+            return File.objects.filter(owner=user)
         return File.objects.filter(owner=user)
 
     def perform_create(self, serializer):
@@ -113,7 +114,7 @@ class FileViewSet(CsrfExemptMixin, viewsets.ModelViewSet):
         logger.info(f"File {filename} downloaded by {request.user.username}")
         return response
 
-    @action(detail=False, methods=['get'], url_path='shared/(?P<token>[a-f0-9]+)')
+    @action(detail=False, methods=['get'], url_path='shared/(?P<token>[a-f0-9]+)', permission_classes=[AllowAny])
     def shared_download(self, request, token):
         # специальная ссылка для внешних пользователей
         try:
@@ -122,7 +123,9 @@ class FileViewSet(CsrfExemptMixin, viewsets.ModelViewSet):
             raise Http404("Файл не найден")
         file.last_download_at = timezone.now()
         file.save()
-        response = FileResponse(file.file, as_attachment=True, filename=file.original_name)
+        response = FileResponse(file.file, as_attachment=True)
+        filename = file.original_name
+        response['Content-Disposition'] = f'attachment; filename="{filename}"; filename*=UTF-8\'\'{filename}'
         return response
 
     @action(detail=True, methods=['get'])
