@@ -247,6 +247,7 @@ sudo certbot --nginx -d your-domain.ru
 Используйте deploy/deploy.sh для обновления приложения:
 ``` bash
 cd /var/www/mycloud
+git pull origin main
 chmod +x deploy/deploy.sh
 ./deploy/deploy.sh
 ```
