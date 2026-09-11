@@ -21,7 +21,7 @@ export const register = createAsyncThunk('auth/register', async (userData) => {
 });
 
 export const fetchMe = createAsyncThunk('auth/me', async () => {
-  const response = await api.get('/users/me/');
+  const response = await api.fetchMe();
   return response.data;
 });
 
@@ -58,6 +58,10 @@ const authSlice = createSlice({
       .addCase(fetchMe.fulfilled, (state, action) => {
         state.user = action.payload;
         state.isAuthenticated = true;
+      })
+      .addCase(fetchMe.rejected, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
       });
   },
 });

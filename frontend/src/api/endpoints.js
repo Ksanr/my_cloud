@@ -11,7 +11,7 @@ export const register = (userData) =>
   api.post('/api/users/', userData);
 
 export const fetchMe = () =>
-  api.get('/users/me/');
+  api.get('/api/users/me/');
 
 // Управление пользователями (админ)
 export const fetchUsers = () =>
