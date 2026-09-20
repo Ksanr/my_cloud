@@ -21,13 +21,13 @@
 ## Структура проекта
 my_cloud/  
 ├── backend/ # Django проект  
-│ ├── manage.py  
-│ ├── my_cloud/ # настройки  
-│ ├── users/ # приложение пользователей  
-│ ├── files/ # приложение файлов  
 │ ├── api/ # API (сериализаторы, вьюхи, права)  
+│ ├── files/ # приложение файлов  
 │ ├── media/ # загруженные файлы (создаётся автоматически)  
 │ ├── static/ # собранная статика (создаётся автоматически)  
+│ ├── my_cloud/ # настройки  
+│ ├── users/ # приложение пользователей  
+│ ├── manage.py  
 │ ├── requirements.txt  
 │ └── .env # переменные окружения (не в репозитории)  
 ├── frontend/ # React приложение  
@@ -45,7 +45,7 @@ my_cloud/
 ## Локальный запуск (разработка)
 
 ### Предварительные требования
-- Python 3.10+
+- Python 3.14
 - Node.js 18+
 - PostgreSQL 14+
 - Git
@@ -87,6 +87,10 @@ ALTER ROLE mycloud_user SET client_encoding TO 'utf8';
 ALTER ROLE mycloud_user SET default_transaction_isolation TO 'read committed';
 ALTER ROLE mycloud_user SET timezone TO 'UTC';
 GRANT ALL PRIVILEGES ON DATABASE mycloud_db TO mycloud_user;
+\c mycloud_db
+GRANT ALL ON SCHEMA public TO mycloud_user;
+GRANT CREATE ON SCHEMA public TO mycloud_user;
+ALTER SCHEMA public OWNER TO mycloud_user;
 \q
 ```
 
@@ -116,9 +120,8 @@ python manage.py runserver
 ``` bash
 cd ../frontend
 npm install
-npm run dev # - локально, для Production: npm run build
+npm run dev # локально, для Production введите: npm run build
 ```
-
 Фронтенд будет доступен по адресу http://localhost:5173.
 
 ## Развёртывание на production (reg.ru)
@@ -126,24 +129,44 @@ npm run dev # - локально, для Production: npm run build
 
 ### 1. Подготовка сервера
 ``` bash
+# Подключение к серверу
+ssh root@ваш_ip_адрес 
+# Обновление системы
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3-pip python3-venv nginx postgresql postgresql-contrib nodejs npm git
+# Установка пакетов
+sudo apt install -y python3-pip python3-venv nginx postgresql postgresql-contrib nodejs npm git curl ufw
+# Настройка брандмауэра
+sudo ufw allow ssh
+sudo ufw allow 'Nginx Full'
+sudo ufw enable
 ```
 
 ### 2. Настройка PostgreSQL
 Создайте БД и пользователя (аналогично локальному запуску).
 
 ### 3. Клонирование и настройка бэкенда
+Создайте каталог и клонируйте репозиторий:
 ``` bash
-cd /var/www
-git clone <URL_репозитория> mycloud
-cd mycloud/backend
-python3 -m venv venv
-source venv/bin/activate
+sudo mkdir -p /var/www/mycloud
+sudo chown $USER:$USER /var/www/mycloud
+cd /var/www/mycloud
+git clone https://github.com/Ksanr/my_cloud.git .
+```
+Настройте виртуальное окружение:
+``` bash
+cd /var/www/mycloud/backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Создайте .env с продакшн-настройками:
+Создайте файл.env:
+``` bash
+nano /var/www/mycloud/backend/.env
+```
+
+Вставьте значения:
 ``` env
 SECRET_KEY=your-production-secret-key
 DEBUG=False
@@ -154,89 +177,162 @@ DB_PASSWORD=secure_password
 DB_HOST=localhost
 DB_PORT=5432
 CORS_ALLOWED_ORIGINS=https://your-domain.ru
+CSRF_TRUSTED_ORIGINS=https://ваш-домен.ru,https://www.ваш-домен.ru
 ```
 
-Примените миграции, соберите статику, создайте суперпользователя:
+Создайте папку для медиафайлов и задайте права:
+``` bash
+mkdir -p /var/www/mycloud/backend/media
+sudo chown -R www-data:www-data /var/www/mycloud/backend/media
+sudo chmod -R 755 /var/www/mycloud/backend/media
+```
+
+Примените миграции, соберите статику:
 ``` bash
 python manage.py migrate
 python manage.py collectstatic --noinput
+```
+
+Создайте суперпользователя:
+``` bash
 python manage.py createsuperuser
+python manage.py shell
+from users.models import User
+admin = User.objects.get(username='admin')  # или ваш логин
+admin.is_admin = True
+admin.save()
+exit()
 ```
 
 ### 4. Сборка фронтенда
 ``` bash
-cd ../frontend
+cd /var/www/mycloud/frontend
 npm install
 npm run build
 ```
 
 Скопируйте собранные файлы в статику бэкенда (или настройте Nginx отдельно):
 ``` bash
-cp -r build/* ../backend/static/
+cp -r /var/www/mycloud/frontend/dist/* /var/www/mycloud/backend/static/
 ```
 
 ### 5. Настройка Gunicorn
-Скопируйте deploy/gunicorn.service в /etc/systemd/system/gunicorn.service и отредактируйте пути:
+Создайте systemd-сокет для Gunicorn:
+``` bash
+sudo nano /etc/systemd/system/gunicorn.socket
+```
+
+Вставьте:
+``` ini
+[Unit]
+Description=gunicorn socket
+
+[Socket]
+ListenStream=/run/gunicorn.sock
+SocketUser=www-data
+
+[Install]
+WantedBy=sockets.target
+```
+
+Создайте сервис Gunicorn:
+``` bash
+sudo nano /etc/systemd/system/gunicorn.service
+```
+
+Вставьте:
 ``` ini
 [Unit]
 Description=gunicorn daemon for MyCloud
+Requires=gunicorn.socket
 After=network.target
 
 [Service]
 User=www-data
 Group=www-data
 WorkingDirectory=/var/www/mycloud/backend
-ExecStart=/var/www/mycloud/backend/venv/bin/gunicorn --workers 3 --bind unix:/var/www/mycloud/backend/mycloud.sock my_cloud.wsgi:application
+ExecStart=/var/www/mycloud/backend/.venv/bin/gunicorn \
+    --access-logfile - \
+    --workers 3 \
+    --bind unix:/run/gunicorn.sock \
+    my_cloud.wsgi:application
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
+```
 
-Запустите и включите сервис:
-bash
-
+Запустите и включите:
+``` bash
+sudo systemctl daemon-reload
+sudo systemctl start gunicorn.socket
+sudo systemctl enable gunicorn.socket
 sudo systemctl start gunicorn
 sudo systemctl enable gunicorn
 ```
 
 ### 6. Настройка Nginx
-Скопируйте deploy/nginx.conf в /etc/nginx/sites-available/mycloud и отредактируйте server_name и пути:
+Создайте конфигурацию:
+``` bash
+sudo nano /etc/nginx/sites-available/mycloud
+```
+
+Вставьте (замените ваш-домен.ru на ваш домен):
 ``` nginx
+upstream django {
+    server unix:/run/gunicorn.sock fail_timeout=0;
+}
+
 server {
     listen 80;
-    server_name your-domain.ru;
+    server_name ваш-домен.ru www.ваш-домен.ru;
 
-    location / {
-        root /var/www/mycloud/backend/static;
-        try_files $uri @proxy;
+    # Максимальный размер загружаемого файла
+    client_max_body_size 100M;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+
+    # Статика Django (admin, DRF, собранный фронтенд)
+    location /static/ {
+        alias /var/www/mycloud/backend/static/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
     }
 
-    location @proxy {
-        include proxy_params;
-        proxy_pass http://unix:/var/www/mycloud/backend/mycloud.sock;
+    # Медиафайлы (загруженные пользователями)
+    location /media/ {
+        alias /var/www/mycloud/backend/media/;
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    # API и аутентификация → Django
+    location ~ ^/(api|admin|login|logout|test)/ {
+        proxy_pass http://django;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
     }
 
-    location /media/ {
-        alias /var/www/mycloud/backend/media/;
-    }
-
-    location /static/ {
-        alias /var/www/mycloud/backend/static/;
+    # SPA: всё остальное отдаём как index.html
+    location / {
+        root /var/www/mycloud/backend/static;
+        try_files $uri $uri/ /index.html;
     }
 }
 ```
 
 Активируйте сайт и перезапустите Nginx:
 ``` bash
-sudo ln -s /etc/nginx/sites-available/mycloud /etc/nginx/sites-enabled
+sudo ln -s /etc/nginx/sites-available/mycloud /etc/nginx/sites-enabled/
 sudo nginx -t
-sudo systemctl restart nginx
+sudo systemctl reload nginx
 ```
 
 ### 7. HTTPS (опционально)
+Получите бесплатный SSL-сертификат:
 ``` bash
 sudo apt install certbot python3-certbot-nginx
 sudo certbot --nginx -d your-domain.ru
@@ -244,12 +340,58 @@ sudo certbot --nginx -d your-domain.ru
 
 ### 8. Автоматизация деплоя
 
-Используйте deploy/deploy.sh для обновления приложения:
+Создайте скрипт deploy.sh для обновления приложения:
+``` bash
+nano /var/www/mycloud/deploy.sh
+```
+
+Вставьте:
+``` bash
+#!/bin/bash
+set -e
+
+cd /var/www/mycloud
+
+# 1. Обновить код
+git pull origin main
+
+# 2. Обновить зависимости бэкенда
+cd backend
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# 3. Применить миграции
+python manage.py migrate
+
+# 4. Собрать статику Django
+python manage.py collectstatic --noinput
+
+# 5. Собрать фронтенд
+cd ../frontend
+npm install
+npm run build
+
+# 6. Скопировать собранный фронтенд поверх статики
+cp -r dist/* ../backend/static/
+
+# 7. Перезапустить Gunicorn
+sudo systemctl restart gunicorn
+
+# 8. Перезагрузить Nginx
+sudo systemctl reload nginx
+
+echo "Развертывание успешно завершено!"
+```
+Сделайте исполняемым:
+``` bash
+chmod +x /var/www/mycloud/deploy.sh
+```
+
+Для обновления проекта:
 ``` bash
 cd /var/www/mycloud
 git pull origin main
-chmod +x deploy/deploy.sh
-./deploy/deploy.sh
+./deploy.sh
 ```
 
 ## API

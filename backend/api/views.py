@@ -1,11 +1,11 @@
 import logging
 import os
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.utils import timezone
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, generics, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -63,6 +63,16 @@ class FileViewSet(CsrfExemptMixin, viewsets.ModelViewSet):
             # По умолчанию – свои файлы
             return File.objects.filter(owner=user)
         return File.objects.filter(owner=user)
+
+    def get_object(self):
+        # Для действий над конкретным файлом ищем напрямую в БД,
+        # чтобы админ мог управлять чужими файлами.
+        if self.action in ['retrieve', 'update', 'partial_update', 'destroy',
+                           'download', 'rename', 'set_comment', 'special_link']:
+            obj = get_object_or_404(File, pk=self.kwargs['pk'])
+            self.check_object_permissions(self.request, obj)
+            return obj
+        return super().get_object()
 
     def perform_create(self, serializer):
         file_obj = self.request.FILES.get('file')
@@ -132,7 +142,6 @@ class FileViewSet(CsrfExemptMixin, viewsets.ModelViewSet):
     def special_link(self, request, pk=None):
         file = self.get_object()
         return Response({"special_link": file.special_link})
-
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
