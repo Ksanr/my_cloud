@@ -85,11 +85,26 @@ const FileManager = () => {
   const handleCopyLink = async (id) => {
     try {
       const res = await getSpecialLink(id);
-      const link = `http://localhost:8000/api/files/shared/${res.data.special_link}`;
-      await navigator.clipboard.writeText(link);
-      alert('Ссылка скопирована!');
+      const link = `${window.location.origin}/api/files/shared/${res.data.special_link}`;
+
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(link);
+        alert('Ссылка скопирована в буфер обмена:\n' + link);
+      } else {
+        // Fallback для HTTP
+        const textarea = document.createElement('textarea');
+        textarea.value = link;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        alert('Ссылка скопирована в буфер обмена:\n' + link);
+      }
     } catch (err) {
       console.error('Copy link error', err);
+      alert('Ошибка при получении ссылки: ' + (err.message || 'неизвестная ошибка'));
     }
   };
 
