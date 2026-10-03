@@ -17,12 +17,11 @@ from users.models import User
 
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdmin
 from .serializers import FileSerializer, UserCreateSerializer, UserSerializer
-from .utils import CsrfExemptMixin
 
 logger = logging.getLogger(__name__)
 
 
-class UserViewSet(CsrfExemptMixin, viewsets.ModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
@@ -54,7 +53,7 @@ class UserViewSet(CsrfExemptMixin, viewsets.ModelViewSet):
         return super().get_permissions()
 
 
-class FileViewSet(CsrfExemptMixin, viewsets.ModelViewSet):
+class FileViewSet(viewsets.ModelViewSet):
     serializer_class = FileSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
 

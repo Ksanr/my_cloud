@@ -76,7 +76,10 @@ STORAGE_BASE_PATH = MEDIA_ROOT  # корень хранилища
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-CSRF_TRUSTED_ORIGINS = ["http://localhost:5173"]
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    'CSRF_TRUSTED_ORIGINS',
+    'http://localhost:5173,http://127.0.0.1:5173'
+).split(',')
 
 # Настройки REST Framework
 REST_FRAMEWORK = {
