@@ -1,18 +1,20 @@
-import os
 import uuid
+
 from django.db import models
-from django.conf import settings
+
 from users.models import User
+
 
 def user_file_path(instance, filename):
     # Генерируем уникальное имя файла с помощью UUID
-    ext = filename.split('.')[-1] if '.' in filename else ''
+    ext = filename.split(".")[-1] if "." in filename else ""
     unique_name = uuid.uuid4().hex
     new_filename = f"{unique_name}.{ext}" if ext else unique_name
     return f"user_{instance.owner.id}/{new_filename}"
 
+
 class File(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='files')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="files")
     original_name = models.CharField(max_length=255)
     size = models.BigIntegerField()  # в байтах
     uploaded_at = models.DateTimeField(auto_now_add=True)

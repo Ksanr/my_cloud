@@ -14,11 +14,7 @@ const FileUpload = ({ onUpload, loading }) => {
 
   return (
     <form onSubmit={handleSubmit} style={{ marginBottom: 20 }}>
-      <input
-        type="file"
-        onChange={(e) => setFile(e.target.files[0])}
-        disabled={loading}
-      />
+      <input type="file" onChange={(e) => setFile(e.target.files[0])} disabled={loading} />
       <input
         type="text"
         placeholder="Комментарий"

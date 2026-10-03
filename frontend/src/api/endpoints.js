@@ -1,27 +1,20 @@
 import api from './axiosConfig';
 
 // Аутентификация
-export const login = (username, password) =>
-  api.post('/login/', { username, password });
+export const login = (username, password) => api.post('/login/', { username, password });
 
-export const logout = () =>
-  api.post('/logout/');
+export const logout = () => api.post('/logout/');
 
-export const register = (userData) =>
-  api.post('/api/users/', userData);
+export const register = (userData) => api.post('/api/users/', userData);
 
-export const fetchMe = () =>
-  api.get('/api/users/me/');
+export const fetchMe = () => api.get('/api/users/me/');
 
 // Управление пользователями (админ)
-export const fetchUsers = () =>
-  api.get('/api/users/');
+export const fetchUsers = () => api.get('/api/users/');
 
-export const deleteUser = (userId) =>
-  api.delete(`/api/users/${userId}/`);
+export const deleteUser = (userId) => api.delete(`/api/users/${userId}/`);
 
-export const updateUser = (userId, data) =>
-  api.patch(`/api/users/${userId}/`, data);
+export const updateUser = (userId, data) => api.patch(`/api/users/${userId}/`, data);
 
 // Работа с файлами
 // Получение списка файлов
@@ -43,8 +36,7 @@ export const uploadFile = (file, comment = '') => {
 };
 
 // Удаление файла
-export const deleteFile = (fileId) =>
-  api.delete(`/api/files/${fileId}/`);
+export const deleteFile = (fileId) => api.delete(`/api/files/${fileId}/`);
 
 // Переименование
 export const renameFile = (fileId, newName) =>
@@ -59,8 +51,7 @@ export const downloadFile = (fileId) =>
   api.get(`/api/files/${fileId}/download/`, { responseType: 'blob' });
 
 // Получение специальной ссылки (токена)
-export const getSpecialLink = (fileId) =>
-  api.get(`/api/files/${fileId}/special_link/`);
+export const getSpecialLink = (fileId) => api.get(`/api/files/${fileId}/special_link/`);
 
 // Скачивание по специальной ссылке (внешний доступ)
 export const downloadShared = (token) =>

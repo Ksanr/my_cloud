@@ -8,7 +8,7 @@ export const login = createAsyncThunk('auth/login', async (credentials) => {
 });
 
 export const logout = createAsyncThunk('auth/logout', async () => {
-    await api.logout();
+  await api.logout();
   return {};
 });
 
@@ -36,7 +36,9 @@ const authSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(login.pending, (state) => { state.isLoading = true; })
+      .addCase(login.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload;
@@ -56,8 +58,13 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
       })
       .addCase(fetchMe.fulfilled, (state, action) => {
-        state.user = action.payload;
-        state.isAuthenticated = true;
+        if (action.payload) {
+          state.user = action.payload;
+          state.isAuthenticated = true;
+        } else {
+          state.user = null;
+          state.isAuthenticated = false;
+        }
       })
       .addCase(fetchMe.rejected, (state) => {
         state.user = null;

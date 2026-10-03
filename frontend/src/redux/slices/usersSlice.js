@@ -2,29 +2,20 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as api from '../../api/endpoints';
 
 // Асинхронные действия
-export const fetchUsers = createAsyncThunk(
-  'users/fetchUsers',
-  async () => {
-    const response = await api.fetchUsers();
-    return response.data;
-  }
-);
+export const fetchUsers = createAsyncThunk('users/fetchUsers', async () => {
+  const response = await api.fetchUsers();
+  return response.data;
+});
 
-export const deleteUser = createAsyncThunk(
-  'users/deleteUser',
-  async (userId) => {
-    await api.deleteUser(userId);
-    return userId;
-  }
-);
+export const deleteUser = createAsyncThunk('users/deleteUser', async (userId) => {
+  await api.deleteUser(userId);
+  return userId;
+});
 
-export const updateUser = createAsyncThunk(
-  'users/updateUser',
-  async ({ userId, data }) => {
-    const response = await api.updateUser(userId, data);
-    return response.data;
-  }
-);
+export const updateUser = createAsyncThunk('users/updateUser', async ({ userId, data }) => {
+  const response = await api.updateUser(userId, data);
+  return response.data;
+});
 
 // Slice
 const usersSlice = createSlice({

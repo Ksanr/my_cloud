@@ -3,37 +3,25 @@ import * as api from '../../api/endpoints';
 import { logout } from './authSlice';
 
 // Асинхронные действия
-export const fetchFiles = createAsyncThunk(
-  'files/fetchFiles',
-  async (userId = null) => {
-    const response = await api.fetchFiles(userId);
-    return response.data;
-  }
-);
+export const fetchFiles = createAsyncThunk('files/fetchFiles', async (userId = null) => {
+  const response = await api.fetchFiles(userId);
+  return response.data;
+});
 
-export const uploadFile = createAsyncThunk(
-  'files/uploadFile',
-  async ({ file, comment }) => {
-    const response = await api.uploadFile(file, comment);
-    return response.data; // ожидается, что бэкенд возвращает созданный объект
-  }
-);
+export const uploadFile = createAsyncThunk('files/uploadFile', async ({ file, comment }) => {
+  const response = await api.uploadFile(file, comment);
+  return response.data; // ожидается, что бэкенд возвращает созданный объект
+});
 
-export const deleteFile = createAsyncThunk(
-  'files/deleteFile',
-  async (fileId) => {
-    await api.deleteFile(fileId);
-    return fileId;
-  }
-);
+export const deleteFile = createAsyncThunk('files/deleteFile', async (fileId) => {
+  await api.deleteFile(fileId);
+  return fileId;
+});
 
-export const renameFile = createAsyncThunk(
-  'files/renameFile',
-  async ({ fileId, newName }) => {
-    const response = await api.renameFile(fileId, newName);
-    return response.data; // обновлённый объект файла
-  }
-);
+export const renameFile = createAsyncThunk('files/renameFile', async ({ fileId, newName }) => {
+  const response = await api.renameFile(fileId, newName);
+  return response.data; // обновлённый объект файла
+});
 
 export const updateComment = createAsyncThunk(
   'files/updateComment',

@@ -9,13 +9,22 @@ import FileManager from './components/files/FileManager';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import NotFound from './components/common/NotFound';
 import { fetchMe } from './redux/slices/authSlice';
+import api from './api/axiosConfig';
 
 function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
     // Пытаемся восстановить сессию при загрузке приложения
-    dispatch(fetchMe());
+    const init = async () => {
+      try {
+        await api.get('/api/csrf/'); // установит csrftoken в cookie
+      } catch {
+        // игнорируем
+      }
+      dispatch(fetchMe());
+    };
+    init();
   }, [dispatch]);
 
   return (
@@ -27,8 +36,15 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<FileManager />} />
           <Route path="/files" element={<FileManager />} />
-          <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
-          <Route path="*" element={<NotFound />} />   {/* ловим левые страницы для 404 */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminPanel />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<NotFound />} /> {/* ловим левые страницы для 404 */}
         </Routes>
       </div>
     </BrowserRouter>

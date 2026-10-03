@@ -15,22 +15,34 @@ const Navbar = () => {
   return (
     <nav style={styles.nav}>
       <div style={styles.left}>
-        <Link to="/" style={styles.link}>My Cloud</Link>
+        <Link to="/" style={styles.link}>
+          My Cloud
+        </Link>
       </div>
       <div style={styles.right}>
         {!isAuthenticated ? (
           <>
-            <Link to="/login" style={styles.link}>Вход</Link>
-            <Link to="/register" style={styles.link}>Регистрация</Link>
+            <Link to="/login" style={styles.link}>
+              Вход
+            </Link>
+            <Link to="/register" style={styles.link}>
+              Регистрация
+            </Link>
           </>
         ) : (
           <>
             {user?.is_admin && (
-              <Link to="/admin" style={styles.link}>Админка</Link>
+              <Link to="/admin" style={styles.link}>
+                Админка
+              </Link>
             )}
-            <Link to="/" style={styles.link}>Файлы</Link>
+            <Link to="/" style={styles.link}>
+              Файлы
+            </Link>
             <span style={styles.user}>{user?.username}</span>
-            <button onClick={handleLogout} style={styles.button}>Выйти</button>
+            <button onClick={handleLogout} style={styles.button}>
+              Выйти
+            </button>
           </>
         )}
       </div>

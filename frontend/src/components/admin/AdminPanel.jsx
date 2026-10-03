@@ -1,13 +1,11 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsers, deleteUser, updateUser } from '../../redux/slices/usersSlice';
-import { fetchFiles } from '../../redux/slices/filesSlice';
 import { Link } from 'react-router-dom';
 
 const AdminPanel = () => {
   const dispatch = useDispatch();
   const { users, loading, error } = useSelector((state) => state.users);
-  const { items: files } = useSelector((state) => state.files);
 
   useEffect(() => {
     dispatch(fetchUsers());

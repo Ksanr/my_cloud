@@ -27,7 +27,7 @@ const FileManager = () => {
   useEffect(() => {
     if (isAuthenticated) {
       // Если userIdParam есть и пользователь админ, передаём его; иначе undefined (свои файлы)
-      const targetUserId = (user?.is_admin && userIdParam) ? userIdParam : undefined;
+      const targetUserId = user?.is_admin && userIdParam ? userIdParam : undefined;
       dispatch(fetchFiles(targetUserId));
     } else {
       dispatch(clearFiles());
@@ -41,14 +41,14 @@ const FileManager = () => {
     setSelectedFile(null);
     setComment('');
     // Обновляем список после загрузки
-    const targetUserId = (user?.is_admin && userIdParam) ? userIdParam : undefined;
+    const targetUserId = user?.is_admin && userIdParam ? userIdParam : undefined;
     dispatch(fetchFiles(targetUserId));
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Удалить файл?')) {
       await dispatch(deleteFile(id));
-      const targetUserId = (user?.is_admin && userIdParam) ? userIdParam : undefined;
+      const targetUserId = user?.is_admin && userIdParam ? userIdParam : undefined;
       dispatch(fetchFiles(targetUserId));
     }
   };
@@ -56,14 +56,14 @@ const FileManager = () => {
   const handleRename = async (id, newName) => {
     await dispatch(renameFile({ fileId: id, newName }));
     setEditingFile(null);
-    const targetUserId = (user?.is_admin && userIdParam) ? userIdParam : undefined;
+    const targetUserId = user?.is_admin && userIdParam ? userIdParam : undefined;
     dispatch(fetchFiles(targetUserId));
   };
 
   const handleCommentUpdate = async (id, newComment) => {
     await dispatch(updateComment({ fileId: id, comment: newComment }));
     setEditingFile(null);
-    const targetUserId = (user?.is_admin && userIdParam) ? userIdParam : undefined;
+    const targetUserId = user?.is_admin && userIdParam ? userIdParam : undefined;
     dispatch(fetchFiles(targetUserId));
   };
 
@@ -115,17 +115,20 @@ const FileManager = () => {
         <h2>Добро пожаловать в My Cloud!</h2>
         <p>Для доступа к файлам необходимо войти или зарегистрироваться.</p>
         <div style={{ marginTop: 20 }}>
-          <Link to="/login"><button>Войти</button></Link>
-          <Link to="/register"><button style={{ marginLeft: 10 }}>Регистрация</button></Link>
+          <Link to="/login">
+            <button>Войти</button>
+          </Link>
+          <Link to="/register">
+            <button style={{ marginLeft: 10 }}>Регистрация</button>
+          </Link>
         </div>
       </div>
     );
   }
 
   // Для администратора показываем, чьи файлы мы смотрим
-  const displayName = userIdParam && user?.is_admin
-    ? usernameParam || `Пользователь ID ${userIdParam}`
-    : 'Мои';
+  const displayName =
+    userIdParam && user?.is_admin ? usernameParam || `Пользователь ID ${userIdParam}` : 'Мои';
 
   return (
     <div style={{ padding: 20 }}>
@@ -134,17 +137,16 @@ const FileManager = () => {
       {/* Форма загрузки – только для своих файлов (если администратор не в чужом кабинете) */}
       {(!userIdParam || !user?.is_admin) && (
         <form onSubmit={handleUpload} style={{ marginBottom: 20 }}>
-          <input
-            type="file"
-            onChange={(e) => setSelectedFile(e.target.files[0])}
-          />
+          <input type="file" onChange={(e) => setSelectedFile(e.target.files[0])} />
           <input
             type="text"
             placeholder="Комментарий"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
           />
-          <button type="submit" disabled={!selectedFile}>Загрузить</button>
+          <button type="submit" disabled={!selectedFile}>
+            Загрузить
+          </button>
         </form>
       )}
 
@@ -158,7 +160,9 @@ const FileManager = () => {
             <div>
               <strong>{file.original_name}</strong> ({file.size_human})
               <span style={{ marginLeft: 10 }}>Комментарий: {file.comment || '—'}</span>
-              <span style={{ marginLeft: 10 }}>Загружен: {new Date(file.uploaded_at).toLocaleDateString()}</span>
+              <span style={{ marginLeft: 10 }}>
+                Загружен: {new Date(file.uploaded_at).toLocaleDateString()}
+              </span>
             </div>
             <div>
               <button onClick={() => handleDownload(file.id, file.original_name)}>Скачать</button>

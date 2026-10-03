@@ -33,7 +33,9 @@ const FileList = ({
           <div>
             <strong>{file.original_name}</strong> ({file.size_human})
             <span style={{ marginLeft: 10 }}>Комментарий: {file.comment || '—'}</span>
-            <span style={{ marginLeft: 10 }}>Загружен: {new Date(file.uploaded_at).toLocaleDateString()}</span>
+            <span style={{ marginLeft: 10 }}>
+              Загружен: {new Date(file.uploaded_at).toLocaleDateString()}
+            </span>
           </div>
           <div>
             <button onClick={() => onDownload(file.id)}>Скачать</button>
